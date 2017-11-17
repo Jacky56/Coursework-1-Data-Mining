@@ -10,7 +10,7 @@ import org.jblas.*;
 public final class DataManager {
 
 	//fail?
-	private static List<HashMap<String,Integer>> count = new ArrayList<HashMap<String,Integer>>();
+	public static List<HashMap<String,Integer>> count = new ArrayList<HashMap<String,Integer>>();
 	
 	private static String regex = "";
 	
@@ -194,44 +194,31 @@ public final class DataManager {
 	}
 	
 	//split data set to sample set depending on column picked
-	public static List<ArrayList<DoubleMatrix>> split(DoubleMatrix dataSet,int col) {
-		HashMap<Integer, ArrayList<DoubleMatrix>> bins = new HashMap<Integer, ArrayList<DoubleMatrix>>();
+	public static List<DoubleMatrix> split(DoubleMatrix dataSet,int col) {
+		
+		HashMap<Double ,DoubleMatrix> bins = new HashMap<Double ,DoubleMatrix>();
+		
+
+		for (Map.Entry<String, Integer> entry : count.get(col).entrySet()) {
+			bins.put(Double.valueOf(entry.getKey()), new DoubleMatrix(0, dataSet.columns));
+		}		
+		
+		for(int row = 0; row < dataSet.rows; row++) {
+			double binNo = dataSet.get(row,col);
+			bins.put(binNo, DoubleMatrix.concatVertically(bins.get(binNo), dataSet.getRow(row)));
+		}
 		
 		
-		 for(int row = 0; row < dataSet.rows; row++) {
-			 
-			 int binNo = (int)dataSet.get(row,col);
-			 
-			 if(bins.containsKey(binNo)) {
-				 bins.get(binNo).add(dataSet.getRow(row));
-			 } else {
-				 ArrayList<DoubleMatrix> temp = new ArrayList<DoubleMatrix>();
-				 temp.add(dataSet.getRow(row));
-				 bins.put(binNo,temp);
-			 }
-			 
-		 }
-		 
-		 
-		List<ArrayList<DoubleMatrix>> returnBins = new ArrayList<ArrayList<DoubleMatrix>>();
-		for (ArrayList<DoubleMatrix> entry : bins.values()) {
+		List<DoubleMatrix> returnBins = new ArrayList<DoubleMatrix>();
+		for (DoubleMatrix entry : bins.values()) {
 			returnBins.add(entry);
 			//bins.put(entry.getKey(), value)
 		}
 		
+		
+		
+		
+		
 		return returnBins;
-	}
-	
-	private static Map.Entry<String,Integer> qwe(HashMap<String,Integer> col) {
-		
-		Map.Entry<String, Integer> maxEntry = null;
-
-		for (Map.Entry<String, Integer> entry : col.entrySet()) {
-		    if (maxEntry == null || entry.getValue() > maxEntry.getValue()) {
-		        maxEntry = entry;
-		    }
-		}
-		
-		return maxEntry;
 	}
 }
