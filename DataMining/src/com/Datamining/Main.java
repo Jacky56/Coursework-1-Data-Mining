@@ -4,6 +4,8 @@ import java.util.*;
 import org.jblas.*;
 import java.util.concurrent.*;
 
+import javax.xml.crypto.Data;
+
 public class Main {
 	public static void main(String[] args) {
 		
@@ -32,14 +34,15 @@ public class Main {
 //		System.out.println(dataSet.get(18)[13]);
 		
 
-		int threadPool = 1;
+		int threadPool = 16;
 		ExecutorService executor = Executors.newFixedThreadPool(threadPool);
 		List<Callable<Record[]>> callable = new ArrayList<Callable<Record[]>>();		
 		
 		long startTime = System.currentTimeMillis();
 		
 		
-		//create worker threads.
+		//unweighted
+		System.out.println("Validating Unweighted KNN...");
 		for(int i = 0; i < bins.size(); i++) {
 			DoubleMatrix Train = new DoubleMatrix(0,bins.get(0).columns);
 			DoubleMatrix Validation = bins.get(i);
@@ -50,19 +53,19 @@ public class Main {
 				}
 			}
 			
-			CrossValidation fold = new CrossValidation(Train, Validation,14,new int[]{14,15},40,2);
+			CrossValidation fold = new CrossValidation(Train, Validation,14,new int[]{14,15},40,2,false);
 			callable.add(fold);
-			System.out.println("Work threads: " + callable.size());
+			//System.out.println("Work threads: " + callable.size());
 		}
 		
 		//---returned statistics of each fold.
-		List<Record[]> records = new ArrayList<Record[]>();
+		List<Record[]> unweightedRecords = new ArrayList<Record[]>();
 		
 		try {
 			List<Future<Record[]>> set = executor.invokeAll(callable);
 			
 			for(Future<Record[]> recordFold : set) {
-				records.add(recordFold.get());
+				unweightedRecords.add(recordFold.get());
 			}
 			
 		} catch (Exception e) {
@@ -70,26 +73,103 @@ public class Main {
 		}
 		
 		
+	
+		
+		
+		
+		
+		
+		//weighted
+		callable.clear();
+		System.out.println("Validating Weighted KNN...");
+		for(int i = 0; i < bins.size(); i++) {
+			DoubleMatrix Train = new DoubleMatrix(0,bins.get(0).columns);
+			DoubleMatrix Validation = bins.get(i);
+			
+			for(int j = 0; j < bins.size(); j++) {
+				if(i != j) {
+					Train = DoubleMatrix.concatVertically(Train, bins.get(j));
+				}
+			}
+			
+			CrossValidation fold = new CrossValidation(Train, Validation,14,new int[]{14,15},40,2,true);
+			callable.add(fold);
+			//System.out.println("Work threads: " + callable.size());
+		}
+		
+		//---returned statistics of each fold.
+		List<Record[]> weightedRecords = new ArrayList<Record[]>();
+		
+		try {
+			List<Future<Record[]>> set = executor.invokeAll(callable);
+			
+			for(Future<Record[]> recordFold : set) {
+				weightedRecords.add(recordFold.get());
+			}
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}		
+		
+		
+		
+		
+		
+		
+		
+		
 		//find best parameter 
 		int bestKNN = 0;
 		double bestAccuracy = 0;
-		for(int i = 0; i < records.get(0).length; i++) {
+		boolean weighted = false;
+		
+		
+		for(int i = 0; i < unweightedRecords.get(0).length; i++) {
 			
 			int currentK = 0;
 			double currentAccuracy = 0;
-			for(int j = 0; j < records.size(); j ++) {
-				currentAccuracy += records.get(j)[i].accuracy;
-				currentK = records.get(j)[i].KNN;
+			for(int j = 0; j < unweightedRecords.size(); j ++) {
+				currentAccuracy += unweightedRecords.get(j)[i].accuracy;
+				currentK = unweightedRecords.get(j)[i].KNN;
 			}
 			
 			if(currentAccuracy > bestAccuracy) {
 				bestKNN = currentK;
 				bestAccuracy = currentAccuracy;
-				System.out.println(bestKNN + " : " +bestAccuracy/records.size()  + " : Best");
+				weighted = false;
+				System.out.println(bestKNN + " : unweighted : " +bestAccuracy/unweightedRecords.size()  + " : Best");
 			} else {
-				System.out.println(currentK + " : " + currentAccuracy/records.size());
+				System.out.println(currentK + " : unweighted : " + currentAccuracy/unweightedRecords.size());
 			}
 		}
+		
+		for(int i = 0; i < weightedRecords.get(0).length; i++) {
+			
+			int currentK = 0;
+			double currentAccuracy = 0;
+			for(int j = 0; j < weightedRecords.size(); j ++) {
+				currentAccuracy += weightedRecords.get(j)[i].accuracy;
+				currentK = weightedRecords.get(j)[i].KNN;
+			}
+			
+			if(currentAccuracy > bestAccuracy) {
+				bestKNN = currentK;
+				bestAccuracy = currentAccuracy;
+				weighted = true;
+				System.out.println(bestKNN + " : weighted :" +bestAccuracy/weightedRecords.size()  + " : Best");
+			} else {
+				System.out.println(currentK + " : weighted :" + currentAccuracy/weightedRecords.size());
+			}
+		}		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		
 		
@@ -99,14 +179,9 @@ public class Main {
 		callable.clear();
 		
 		for(int i = 0; i < testBins.size(); i++) {
-			CrossValidation fold = new CrossValidation(M, testBins.get(i),14,new int[]{14, 15},bestKNN,bestKNN-1);
+			CrossValidation fold = new CrossValidation(M, testBins.get(i),14,new int[]{14, 15},bestKNN,bestKNN-1,weighted);
 			callable.add(fold);
 		}
-		
-//		CrossValidation fold = new CrossValidation(M, test,14,new int[]{14, 15},bestKNN,bestKNN-1);
-//		callable.add(fold);
-		
-		//---return testRecords 
 		List<Record[]> testRecords = new ArrayList<Record[]>();
 		
 		try {
@@ -114,11 +189,6 @@ public class Main {
 			
 			for(Future<Record[]> recordFold : set) {
 				testRecords.add(recordFold.get());
-				//System.out.println(recordFold.get().length);
-				//Record testMa = recordFold.get()[1];
-				//int[][] testM = testMa.confusionMat;
-				//System.out.println(recordFold.get()[1].accuracy +  "   test  "+recordFold.get()[1].KNN);
-				//System.out.println(testM[0][0] + ", " + testM[0][1] +", " + testM[1][0] + ", " + testM[1][1]);
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -147,9 +217,12 @@ public class Main {
 		
 		double testAccuracy = (double)correct / total;
 		
-		System.out.println(bestKNN + " : " + testAccuracy);
+		System.out.println(bestKNN + " : "+ weighted + " : " + testAccuracy);
 		System.out.println(testM[0][0] + ", " + testM[0][1] +", " + testM[1][0] + ", " + testM[1][1]);
 		
+		
+		//prints to file
+		DataManager.saveRecord("data/grid.results.txt", bestKNN, weighted, testM, testRecords.get(0)[0].classType, testAccuracy);
 		
 		executor.shutdownNow();
 		

@@ -1,0 +1,10 @@
+TestSet
+
+TestSet:
+accuracy: 0.8004422332780542
+ConfusionMatrix:
+True:   <=50K  >50K
+ <=50K:  11253 1182
+ >50K:  2067 1779
+Best K: 27
+Weighted: false

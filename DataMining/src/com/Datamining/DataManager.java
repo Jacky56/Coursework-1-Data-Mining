@@ -2,7 +2,6 @@ package com.Datamining;
 
 
 import java.util.*;
-import java.util.function.DoubleUnaryOperator;
 import java.io.*;
 import java.nio.file.*;
 
@@ -287,6 +286,41 @@ public final class DataManager {
 		
 		return retunrBins;
 	}
+	
+	
+	public static void saveRecord(String dir,int KNN,boolean weighted, int[][] confusionMat,List<String> classType, double accuracy) {
+		try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(dir, false)))) {
+			writer.println("TestSet");
+			writer.println("");
+			writer.println("TestSet:");
+			writer.println("accuracy: " + accuracy);
+			writer.println("ConfusionMatrix:");
+			
+			String CM = "True: ";
+			for(String clstyp : classType) {
+				CM = CM + " " + clstyp;
+			}
+			writer.println(CM);
+			
+			for(int i = 0; i < confusionMat.length; i++) {
+				CM = classType.get(i) + ": ";
+				for (int j = 0; j < confusionMat[i].length; j++) {
+					CM = CM + " " +  confusionMat[i][j];
+				}
+				writer.println(CM);
+			}
+			
+			writer.println("Best K: " + KNN);
+			writer.println("Weighted: " + weighted);
+			
+			writer.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	
+	
 	
 	
 }
