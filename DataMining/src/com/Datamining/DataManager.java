@@ -2,6 +2,7 @@ package com.Datamining;
 
 
 import java.util.*;
+import java.util.function.DoubleUnaryOperator;
 import java.io.*;
 import java.nio.file.*;
 
@@ -18,11 +19,17 @@ public final class DataManager {
 	public static DoubleMatrix GetFeatures(DoubleMatrix dataSet,int[] col) {
 		DoubleMatrix X = new DoubleMatrix(dataSet.rows,0);
 		for(int i = 0; i < dataSet.columns; i++) {
+			boolean hasException = false;
+			
 			for(int exception : col) {
-				if(i != exception) {
-					X = DoubleMatrix.concatHorizontally(X, dataSet.getColumn(i));
+				if(i == exception) {
+					hasException = true;
 				}
 			}
+			if(!hasException) {
+				X = DoubleMatrix.concatHorizontally(X, dataSet.getColumn(i));
+			}
+			
 		}
 		return X;
 	}
@@ -38,8 +45,9 @@ public final class DataManager {
 	
 	//read csv
 	public static ArrayList<String[]> ReadCSV(String dir,boolean skip) {
-		ArrayList<String[]> dataSet = new  ArrayList<String[]>();
+		count.clear();
 		
+		ArrayList<String[]> dataSet = new  ArrayList<String[]>();
 		Path path = Paths.get(dir);
 		
 		try (BufferedReader reader = Files.newBufferedReader(path)){
@@ -55,8 +63,8 @@ public final class DataManager {
 				
 				//will read next line if skip = true and line has regex value
 				if(!(line.contains(regex) && skip)) {
-					String[] value = line.split(",");
 					
+					String[] value = line.split(",");
 					dataSet.add(value);
 					
 					for(int i = 0; i < value.length; i++) {
@@ -64,12 +72,27 @@ public final class DataManager {
 							count.get(i).put(value[i], count.get(i).containsKey(value[i]) ? count.get(i).get(value[i]) + 1 : 1);
 						}
 					}
+					
 				}
-				
 			}
+			
 		} catch (IOException e) {
 			System.out.println("Bad Directory. Cannot find >>> '" + dir+ "'");
 		}
+		
+		
+		int col =0;
+		for(int a= 0;a < count.size(); a++) {
+			for(Map.Entry<String, Integer> set : count.get(a).entrySet()) {
+				if(set.getKey().equals(regex)) {
+					System.out.println(set.getKey() + " : " + set.getValue() + " : " + col + " : " + a);
+				}
+				col ++;
+			}
+		}
+		
+		
+		
 		
 		return dataSet;
 	}
@@ -131,16 +154,24 @@ public final class DataManager {
 		DoubleMatrix returnSet = new DoubleMatrix(dataSet.rows,dataSet.columns);
 		DoubleMatrix rawSet = dataSet;
 		
-		for(int row = 0; row < dataSet.rows; row++) {
-			DoubleMatrix X = rawSet.getRow(row);
-			double u = rawSet.getRow(row).mean();
-			double s = GetStd(rawSet.getRow(row));
+//		for(int row = 0; row < dataSet.rows; row++) {
+//			DoubleMatrix X = rawSet.getRow(row);
+//			double u = rawSet.getRow(row).mean();
+//			double s = GetStd(rawSet.getRow(row));
+//			DoubleMatrix Z = (X.sub(u)).div(s);
+//			returnSet.putRow(row, Z);
+//		}
+		
+		for(int col = 0; col < dataSet.columns; col ++) {
+			
+			DoubleMatrix X = rawSet.getColumn(col);
+			double u = X.mean();
+			double s = GetStd(X);
 			DoubleMatrix Z = (X.sub(u)).div(s);
-			returnSet.putRow(row, Z);
+			returnSet.putColumn(col, Z);
 		}
+		
 		return returnSet;
-		//return dataSetToMatrix(ReplaceMissingValues(dataSet,("?")));
-		//return dataSetToMatrix(dataSet);
 	}
 	
 	public static double GetStd(DoubleMatrix s) {
@@ -153,22 +184,34 @@ public final class DataManager {
 	}
 	
 	
-	
+	//%$£%$£"F^
 	//convert string attributes into double
-	//no cell can be Null for this 
-	public static DoubleMatrix dataSetToMatrix(ArrayList<String[]> dataSet) {
+	//no cell can be Null for this
+	//I dont know how to evaluate String values, therefore they are assigned with integers depending on their value.
+	//requires to know which line is classtype. Nope.
+	public static DoubleMatrix dataSetToMatrix(ArrayList<String[]> dataSet , int classType) {
 		
 		HashMap<String, Double> StringToNumber = new HashMap<String, Double>();
 		
-		for(HashMap<String,Integer> col : count) {
+		//for(HashMap<String,Integer> col : count) {
+		for(int col = 0; col < count.size(); col ++) {	
+
 			Double val = 0d;
-			for (Map.Entry<String, Integer> entry : col.entrySet()) {
+			for (Map.Entry<String, Integer> entry : count.get(col).entrySet()) {
 				try {
 					Double.valueOf(entry.getKey());
 				} catch (NumberFormatException e) {
 					if(!StringToNumber.containsKey(entry.getKey())) {
 						StringToNumber.put(entry.getKey(), val);
-						val ++;
+						if(col == classType) {
+							val ++;
+						} else {
+							
+							//String to number here !!!!! <--------
+							val ++;
+							//String to number here !!!!! <--------
+							
+						}
 					}
 				}
 			}
@@ -187,9 +230,14 @@ public final class DataManager {
 					System.out.println("Null values");
 				}
 			}
-			//System.out.println(conversion);
+			
+			if(conversion.size() < dataSet.get(0).length) {
+				System.out.println(conversion + "   " + row + "   " + dataSet.size());
+			}
+			
 			returnSet.putRow(row,new DoubleMatrix(conversion));
-		}		
+		}
+		
 		return returnSet;
 	}
 	
@@ -212,13 +260,33 @@ public final class DataManager {
 		List<DoubleMatrix> returnBins = new ArrayList<DoubleMatrix>();
 		for (DoubleMatrix entry : bins.values()) {
 			returnBins.add(entry);
-			//bins.put(entry.getKey(), value)
 		}
-		
-		
-		
+
 		
 		
 		return returnBins;
 	}
+	
+	//do not use for this task.
+	public static List<DoubleMatrix> splitFold(DoubleMatrix dataSet,int folds) { 
+	
+		List<DoubleMatrix> retunrBins = new ArrayList<DoubleMatrix>();
+		
+		
+		
+		for(int i = 0; i < folds; i++) {
+			retunrBins.add(new DoubleMatrix(0, dataSet.columns));
+		}
+		
+		for(int i = 0; i < dataSet.rows; i++) {
+			int bin = i % folds;
+			retunrBins.set(bin, DoubleMatrix.concatVertically(retunrBins.get(bin), dataSet.getRow(i)));
+		}
+		
+		
+		
+		return retunrBins;
+	}
+	
+	
 }
