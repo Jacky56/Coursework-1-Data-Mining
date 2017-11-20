@@ -47,8 +47,8 @@ public class CrossValidation implements Callable{
 		
 		
 		for(int i = 0; i < y_pred.length; i++) {
-			int[][] confusionMat = confusionMat(y_val, y_pred[i], classType.size());
-			double accuracy = Accuracy(y_val,y_pred[i]);
+			int[][] confusionMat = confusionMat(y_pred[i],y_val, classType.size());
+			double accuracy = Accuracy(y_pred[i],y_val);
 			set[i] = new Record(y_pred[i], (i * step) + 1, accuracy, confusionMat,classType);
 		}
 		
@@ -99,13 +99,13 @@ public class CrossValidation implements Callable{
 				}
 			} else {
 				
-				//weight: sum(1/ dist)
+				//weight: sum(1/ (1 + dist) )
 				HashMap<Double,Double> weightVote = new HashMap<Double,Double>();
 				for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
 					double y_class = y_train.get(ArgSort[neighbors]);
 					double dist  = magVal[ArgSort[neighbors]];
 					
-					weightVote.put(y_class, weightVote.containsKey(y_class) ? weightVote.get(y_class) + 1/dist : 1/dist);
+					weightVote.put(y_class, weightVote.containsKey(y_class) ? weightVote.get(y_class) + 1d/(1d + dist) : 1d/(1d + dist));
 					
 					if(neighbors % step == 0) {
 						outcome.add(getHighest(weightVote));
@@ -136,11 +136,11 @@ public class CrossValidation implements Callable{
 	
 	
 	//working
-	public static int[][] confusionMat(DoubleMatrix y_test, DoubleMatrix y_pred, int noClass) {
+	private static int[][] confusionMat(DoubleMatrix y_pred,DoubleMatrix y_test, int noClass) {
 		
 		int[][] M = new int[noClass][noClass];
 		
-		DoubleMatrix y = DoubleMatrix.concatHorizontally(y_test, y_pred);
+		DoubleMatrix y = DoubleMatrix.concatHorizontally(y_pred, y_test);
 		
 		for(int i = 0; i < y.rows; i++) {
 			M[(int)y.get(i,0)][(int)y.get(i,1)] += 1;
@@ -150,7 +150,7 @@ public class CrossValidation implements Callable{
 	}
 	
 	
-	public static double Accuracy(DoubleMatrix y_test, DoubleMatrix y_pred) {
+	private static double Accuracy(DoubleMatrix y_pred,DoubleMatrix y_test) {
 		
 		double counter =0;
 		

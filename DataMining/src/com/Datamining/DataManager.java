@@ -14,6 +14,10 @@ public final class DataManager {
 	
 	private static String regex = "";
 	
+	//used for splitfold to get deterministic value 
+	private static long seed = 0l;
+	
+	
 	//encapsulation 
 	public static DoubleMatrix GetFeatures(DoubleMatrix dataSet,int[] col) {
 		DoubleMatrix X = new DoubleMatrix(dataSet.rows,0);
@@ -42,6 +46,10 @@ public final class DataManager {
 		regex = reg;
 	}	
 	
+	public static void SetSeed(long seeding) {
+		seed = seeding;
+	}	
+	
 	//read csv
 	public static ArrayList<String[]> ReadCSV(String dir,boolean skip) {
 		count.clear();
@@ -60,19 +68,20 @@ public final class DataManager {
 			
 			while ((line = reader.readLine()) != null) {
 				
-				//will read next line if skip = true and line has regex value
-				if(!(line.contains(regex) && skip)) {
-					
-					String[] value = line.split(",");
-					dataSet.add(value);
-					
-					for(int i = 0; i < value.length; i++) {
-						if(!value[i].equals(regex)) {
-							count.get(i).put(value[i], count.get(i).containsKey(value[i]) ? count.get(i).get(value[i]) + 1 : 1);
+				if (line.matches(".*\\w.*")) {
+					//will read next line if skip = true and line has regex value
+					if(!(line.contains(regex) && skip)) {
+						
+						String[] value = line.split(",");
+						dataSet.add(value);
+						for(int i = 0; i < value.length; i++) {
+							if(!value[i].equals(regex)) {
+								count.get(i).put(value[i], count.get(i).containsKey(value[i]) ? count.get(i).get(value[i]) + 1 : 1);
+							}
 						}
+						
 					}
-					
-				}
+				} 
 			}
 			
 		} catch (IOException e) {
@@ -267,45 +276,117 @@ public final class DataManager {
 	}
 	
 	//do not use for this task.
-	public static List<DoubleMatrix> splitFold(DoubleMatrix dataSet,int folds) { 
+	public static List<DoubleMatrix> splitFold(DoubleMatrix dataSet,int folds, boolean shuffle) { 
 	
+		DoubleMatrix set = dataSet;
 		List<DoubleMatrix> retunrBins = new ArrayList<DoubleMatrix>();
 		
-		
+		if(shuffle) {
+			List<Integer> permutation = new ArrayList<Integer>();
+			for(int i = 0; i < set.rows; i++) {
+				permutation.add(i);
+			}
+			
+			Collections.shuffle(permutation, new Random(seed));
+			
+			set = new DoubleMatrix(dataSet.rows,dataSet.columns);
+			for(int i = 0; i < set.rows; i++) {
+				set.putRow(i, dataSet.getRow(permutation.get(i)));
+			}
+		}
 		
 		for(int i = 0; i < folds; i++) {
-			retunrBins.add(new DoubleMatrix(0, dataSet.columns));
+			retunrBins.add(new DoubleMatrix(0, set.columns));
 		}
 		
-		for(int i = 0; i < dataSet.rows; i++) {
+		for(int i = 0; i < set.rows; i++) {
 			int bin = i % folds;
-			retunrBins.set(bin, DoubleMatrix.concatVertically(retunrBins.get(bin), dataSet.getRow(i)));
+			retunrBins.set(bin, DoubleMatrix.concatVertically(retunrBins.get(bin), set.getRow(i)));
 		}
-		
-		
 		
 		return retunrBins;
 	}
 	
 	
-	public static void saveRecord(String dir,int KNN,boolean weighted, int[][] confusionMat,List<String> classType, double accuracy) {
+
+	
+	
+	
+	public static int[][] combineMat(List<Record[]> records) {
+		int[][] mat = new int[records.get(0)[0].confusionMat.length][records.get(0)[0].confusionMat.length];
+		
+		for(Record[] a : records) {
+			for(int i = 0; i < 2; i++) {
+				for(int j = 0; j < 2; j++) {
+					mat[i][j] += a[a.length-1].confusionMat[i][j];
+				}
+			}
+		}
+		return mat;
+	}
+	
+	public static double getAccuracy(int[][] mat) {
+		int correct = 0;
+		int total = 0;
+		for(int i = 0; i < 2; i++) {
+			for(int j = 0; j < 2; j++) {
+				total += mat[i][j];
+				if(i == j) {
+					correct += mat[i][j];
+				}
+			}
+		}
+		
+		return (double)correct / total;
+	}
+	
+	
+	
+	
+	
+	
+	
+	public static void saveRecord(String dir,int KNN,boolean weighted, int[][] validationM, int[][] testM,List<String> classType, int fold) {
 		try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(dir, false)))) {
-			writer.println("TestSet");
-			writer.println("");
-			writer.println("TestSet:");
-			writer.println("accuracy: " + accuracy);
-			writer.println("ConfusionMatrix:");
 			
+			writer.println("ValidationSet");
+			writer.println("");
+			writer.println("seed: " + seed);
+			writer.println("folds: " + fold);
+			writer.println("accuracy: " + getAccuracy(validationM));
+			writer.println("ConfusionMatrix:");
 			String CM = "True: ";
 			for(String clstyp : classType) {
 				CM = CM + " " + clstyp;
 			}
 			writer.println(CM);
 			
-			for(int i = 0; i < confusionMat.length; i++) {
+			for(int i = 0; i < validationM.length; i++) {
 				CM = classType.get(i) + ": ";
-				for (int j = 0; j < confusionMat[i].length; j++) {
-					CM = CM + " " +  confusionMat[i][j];
+				for (int j = 0; j < validationM[i].length; j++) {
+					CM = CM + " " +  validationM[i][j];
+				}
+				writer.println(CM);
+			}	
+			
+			writer.println("");
+			
+			writer.println("TestSet");
+			writer.println("");
+			writer.println("TestSet:");
+			writer.println("accuracy: " + getAccuracy(testM));
+			writer.println("ConfusionMatrix:");
+			
+			CM = "True: ";
+			for(String clstyp : classType) {
+				CM = CM + " " + clstyp;
+			}
+			writer.println(CM);
+			
+			for(int i = 0; i < testM.length; i++) {
+				CM = classType.get(i) + ": ";
+				for (int j = 0; j < testM[i].length; j++) {
+					CM = CM + " " +  testM[i][j];
 				}
 				writer.println(CM);
 			}

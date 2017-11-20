@@ -10,16 +10,19 @@ public class Main {
 	public static void main(String[] args) {
 		
 		DataManager.SetRegex("?");
-
+		DataManager.SetSeed(0l);
+		
 		ArrayList<String[]> dataSet = DataManager.ReadCSV("data/adult.train.5fold.csv",false);
 		dataSet = DataManager.ReplaceMissingValues(dataSet);
 		DoubleMatrix M = DataManager.dataSetToMatrix(dataSet,14);
 		List<DoubleMatrix> bins = DataManager.split(M, 15);
-
+		//List<DoubleMatrix> bins = DataManager.splitFold(M, 5,true);
+		
 		ArrayList<String[]> testSet = DataManager.ReadCSV("data/adult.test.csv",false);
 		testSet = DataManager.ReplaceMissingValues(testSet);
 		DoubleMatrix test = DataManager.dataSetToMatrix(testSet,14);
-		List<DoubleMatrix> testBins = DataManager.splitFold(test, 8);
+		List<DoubleMatrix> testBins = DataManager.splitFold(test, 8, false);
+		
 		
 		//DoubleMatrix Xn = DataManager.Normalize(DataManager.GetFeatures(M, new int[]{14,15}));
 		
@@ -122,7 +125,7 @@ public class Main {
 		int bestKNN = 0;
 		double bestAccuracy = 0;
 		boolean weighted = false;
-		
+		int validationIndex = 0;
 		
 		for(int i = 0; i < unweightedRecords.get(0).length; i++) {
 			
@@ -137,6 +140,7 @@ public class Main {
 				bestKNN = currentK;
 				bestAccuracy = currentAccuracy;
 				weighted = false;
+				validationIndex = i;
 				System.out.println(bestKNN + " : unweighted : " +bestAccuracy/unweightedRecords.size()  + " : Best");
 			} else {
 				System.out.println(currentK + " : unweighted : " + currentAccuracy/unweightedRecords.size());
@@ -156,6 +160,7 @@ public class Main {
 				bestKNN = currentK;
 				bestAccuracy = currentAccuracy;
 				weighted = true;
+				validationIndex = i;
 				System.out.println(bestKNN + " : weighted :" +bestAccuracy/weightedRecords.size()  + " : Best");
 			} else {
 				System.out.println(currentK + " : weighted :" + currentAccuracy/weightedRecords.size());
@@ -163,10 +168,16 @@ public class Main {
 		}		
 		
 		
-		
-		
-		
-		
+		List<Record[]> bestValidation = new ArrayList<Record[]>();
+		Record[] best = new Record[1];
+		for(int i = 0; i < bins.size(); i++) {
+			if(weighted) {
+				best[0] = weightedRecords.get(i)[validationIndex];
+			} else {
+				best[0] = unweightedRecords.get(i)[validationIndex];
+			}
+			bestValidation.add(best);
+		}
 		
 		
 		
@@ -195,34 +206,21 @@ public class Main {
 		}
 		
 		
-		int[][] testM = new int[2][2];
-		for(Record[] a : testRecords) {
-			for(int i = 0; i < 2; i++) {
-				for(int j = 0; j < 2; j++) {
-					testM[i][j] += a[1].confusionMat[i][j];
-				}
-			}
-		}
 		
-		int correct = 0;
-		int total = 0;
-		for(int i = 0; i < 2; i++) {
-			for(int j = 0; j < 2; j++) {
-				total += testM[i][j];
-				if(i == j) {
-					correct += testM[i][j];
-				}
-			}
-		}
 		
-		double testAccuracy = (double)correct / total;
+		
+		int[][] validationM =  DataManager.combineMat(bestValidation);
+		int[][] testM = DataManager.combineMat(testRecords);
+		double testAccuracy = DataManager.getAccuracy(testM);
+		
+		
 		
 		System.out.println(bestKNN + " : "+ weighted + " : " + testAccuracy);
 		System.out.println(testM[0][0] + ", " + testM[0][1] +", " + testM[1][0] + ", " + testM[1][1]);
 		
 		
 		//prints to file
-		DataManager.saveRecord("data/grid.results.txt", bestKNN, weighted, testM, testRecords.get(0)[0].classType, testAccuracy);
+		DataManager.saveRecord("data/grid.results.txt", bestKNN, weighted,validationM, testM, testRecords.get(0)[0].classType, 5);
 		
 		executor.shutdownNow();
 		
