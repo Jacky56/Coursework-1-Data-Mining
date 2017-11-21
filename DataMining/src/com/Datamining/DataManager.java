@@ -7,10 +7,14 @@ import java.nio.file.*;
 
 import org.jblas.*;
 
+
+
+//main function: to manage data.
 public final class DataManager {
 
-	//fail?
+	//counts unique values and how many times they appeared in dataset
 	public static List<LinkedHashMap<String,Integer>> count = new ArrayList<LinkedHashMap<String,Integer>>();
+	
 	
 	private static String regex = "";
 	
@@ -41,19 +45,19 @@ public final class DataManager {
 		return dataSet.getColumn(col);
 	}
 	
+	//encapsulation
 	public static void SetRegex(String reg) {
 		regex = reg;
 	}	
 	
+	//encapsulation
 	public static void SetSeed(long seeding) {
 		seed = seeding;
 	}	
 	
+	
 	//read csv
 	public static ArrayList<String[]> ReadCSV(String dir,boolean skip) {
-		
-		//count.clear();
-		
 		
 		ArrayList<String[]> dataSet = new  ArrayList<String[]>();
 		Path path = Paths.get(dir);
@@ -74,9 +78,12 @@ public final class DataManager {
 					if(!(line.contains(regex) && skip)) {
 						
 						String[] value = line.split(",");
+						
+						//cleanse string
 						for(int i = 0; i < value.length; i++) {
 							value[i] = value[i].trim().toLowerCase();
 						}
+						
 						dataSet.add(value);
 						for(int i = 0; i < value.length; i++) {
 							if(!value[i].equals(regex)) {
@@ -91,20 +98,6 @@ public final class DataManager {
 		} catch (IOException e) {
 			System.out.println("Bad Directory. Cannot find >>> '" + dir+ "'");
 		}
-		
-		
-		int col =0;
-		for(int a= 0;a < count.size(); a++) {
-			for(Map.Entry<String, Integer> set : count.get(a).entrySet()) {
-				if(set.getKey().equals(regex)) {
-					System.out.println(set.getKey() + " : " + set.getValue() + " : " + col + " : " + a);
-				}
-				col ++;
-			}
-		}
-		
-		
-		
 		
 		return dataSet;
 	}
@@ -125,11 +118,10 @@ public final class DataManager {
 				
 			}
 		}
-		
 		return returnSet;
 	}
 	
-	//!?!
+	//get most common using 'count'
 	private static Map.Entry<String,Integer> getCommon(HashMap<String,Integer> col) {
 		
 		Map.Entry<String, Integer> maxEntry = null;
@@ -143,8 +135,11 @@ public final class DataManager {
 		return maxEntry;
 	}
 	
+	//both of you are gonna write my report for ML and AI :)))))))))))))))))))))))))))))
+	
 	
 	//get 'stratified' sampling : fake, roll 0 to 1 and added in if lower than sampleRatio
+	//do not use.
 	public static ArrayList<String[]> Sample(ArrayList<String[]> dataSet, double sampleRatio) {
 		ArrayList<String[]> returnSet = new ArrayList<String[]>();
 		
@@ -159,7 +154,6 @@ public final class DataManager {
 	
 	
 	//no cell can be Null for this function
-	//
 	//Z-normalization Z = (X-u) /s
 	public static DoubleMatrix Normalize(DoubleMatrix dataSet) {
 		
@@ -186,6 +180,7 @@ public final class DataManager {
 		return returnSet;
 	}
 	
+	
 	public static double GetStd(DoubleMatrix s) {
 		double u = s.mean();
 		double v = 0;
@@ -196,16 +191,14 @@ public final class DataManager {
 	}
 	
 	
-	//%$£%$£"F^
 	//convert string attributes into double
 	//no cell can be Null for this
 	//I dont know how to evaluate String values, therefore they are assigned with integers depending on their value.
-	//requires to know which line is classtype. Nope.
+	//requires to know which line is classtype.
 	public static DoubleMatrix dataSetToMatrix(ArrayList<String[]> dataSet , int classType) {
 		
 		LinkedHashMap<String, Double> StringToNumber = new LinkedHashMap<String, Double>();
 		
-		//for(HashMap<String,Integer> col : count) {
 		for(int col = 0; col < count.size(); col ++) {	
 
 			Double val = 0d;
@@ -253,6 +246,7 @@ public final class DataManager {
 		return returnSet;
 	}
 	
+	
 	//split data set to sample set depending on column picked
 	public static List<DoubleMatrix> split(DoubleMatrix dataSet,int col) {
 		
@@ -273,13 +267,12 @@ public final class DataManager {
 		for (DoubleMatrix entry : bins.values()) {
 			returnBins.add(entry);
 		}
-
-		
-		
 		return returnBins;
 	}
 	
+	
 	//do not use for this task.
+	//split dataset amongst several folds with random permutation
 	public static List<DoubleMatrix> splitFold(DoubleMatrix dataSet,int folds, boolean shuffle) { 
 	
 		DoubleMatrix set = dataSet;
@@ -314,7 +307,6 @@ public final class DataManager {
 
 	
 	
-	
 	public static int[][] combineMat(List<Record[]> records) {
 		int[][] mat = new int[records.get(0)[0].confusionMat.length][records.get(0)[0].confusionMat.length];
 		
@@ -327,6 +319,7 @@ public final class DataManager {
 		}
 		return mat;
 	}
+	
 	
 	public static double getAccuracy(int[][] mat) {
 		int correct = 0;
@@ -342,8 +335,6 @@ public final class DataManager {
 		
 		return (double)correct / total;
 	}
-	
-	
 	
 	
 	

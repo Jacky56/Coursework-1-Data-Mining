@@ -3,7 +3,7 @@ package com.Datamining;
 import org.jblas.DoubleMatrix;
 import java.util.*;
 
-
+//class to record result data.
 public class Record {
 	
 	//too damn lazy to encapsulate

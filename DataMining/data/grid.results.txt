@@ -21,6 +21,6 @@ True:  >50k <=50k
 
 Multithreading
 
-Run time(millisecond): 25663.0
+Run time(millisecond): 23582.0
 Thread pool: 16
 Cores: 4

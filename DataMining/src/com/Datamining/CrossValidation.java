@@ -34,6 +34,7 @@ public class CrossValidation implements Callable{
 	
 	
 	
+	//return function when invoked 
 	public Record[] call() {
 		
 		DoubleMatrix[] y_pred = KNN(X_train,y_train,X_val,KNN,step,weighted);
@@ -53,20 +54,12 @@ public class CrossValidation implements Callable{
 			int k = KNN <= step ? KNN -1 : (i * step) + 1;
 			set[i] = new Record(y_pred[i], k, accuracy, confusionMat,classType);
 		}
-		
-		
-		//int[][] confusionMat = confusionMat(y_val, y_pred, classType.size());
-		
-		//double accuracy = Accuracy(y_val,y_pred);
-		
 		return set;
-		//return new Record(y_pred, KNN, accuracy, confusionMat,classType);
 	}
 	
-	
+	//the KNN function
 	private DoubleMatrix[] KNN(DoubleMatrix X_train, DoubleMatrix y_train,DoubleMatrix X_test, int n_neighbors,int step , boolean weighted) {
-		//DoubleMatrix y_pred = new DoubleMatrix(X_test.rows,1);
-		
+
 		DoubleMatrix[] y_pred = new DoubleMatrix[(int)Math.ceil((float)n_neighbors/step)];
 		
 		for (int i = 0; i < y_pred.length; i ++) {
@@ -75,6 +68,7 @@ public class CrossValidation implements Callable{
 		
 		for(int test = 0; test < X_test.rows; test ++) {
 			
+			//distance2 calculates euclidean/magnitude distance -> build your own if you want.
 			double magVal[] = new double[X_train.rows];
 			for(int i = 0; i < magVal.length; i++) {
 				magVal[i] = X_test.getRow(test).distance2(X_train.getRow(i));
@@ -86,7 +80,6 @@ public class CrossValidation implements Callable{
 			List<Double> outcome = new ArrayList<Double>();
 			
 			if(!weighted) {
-				
 				//counts up results
 				HashMap<Double, Double> counter = new HashMap<Double, Double>();
 				for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
@@ -103,7 +96,6 @@ public class CrossValidation implements Callable{
 					outcome.add(getHighest(counter));
 				}
 			} else {
-				
 				//weight: sum(1/ (1 + dist) )
 				HashMap<Double,Double> weightVote = new HashMap<Double,Double>();
 				for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
@@ -128,6 +120,7 @@ public class CrossValidation implements Callable{
 		return y_pred;
 	}
 	
+	//Now you guys are really gonna help me with my reports :))))))))))))))))))))))))))))))))))))))))))))
 	
 	private Double getHighest(HashMap<Double, Double> countSet) {
 		Map.Entry<Double, Double> maxCount = null;
@@ -145,7 +138,6 @@ public class CrossValidation implements Callable{
 	private static int[][] confusionMat(DoubleMatrix y_pred,DoubleMatrix y_test, int noClass) {
 		
 		int[][] M = new int[noClass][noClass];
-		
 		DoubleMatrix y = DoubleMatrix.concatHorizontally(y_pred, y_test);
 		
 		for(int i = 0; i < y.rows; i++) {
