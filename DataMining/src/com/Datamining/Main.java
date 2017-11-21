@@ -116,17 +116,11 @@ public class Main {
 		
 		
 		
-		
-		
-		
-		
-		
 		//find best parameter 
 		int bestKNN = 0;
 		double bestAccuracy = 0;
 		boolean weighted = false;
 		int validationIndex = 0;
-		
 		for(int i = 0; i < unweightedRecords.get(0).length; i++) {
 			
 			int currentK = 0;
@@ -152,6 +146,7 @@ public class Main {
 			int currentK = 0;
 			double currentAccuracy = 0;
 			for(int j = 0; j < weightedRecords.size(); j ++) {
+				
 				currentAccuracy += weightedRecords.get(j)[i].accuracy;
 				currentK = weightedRecords.get(j)[i].KNN;
 			}
@@ -168,6 +163,7 @@ public class Main {
 		}		
 		
 		
+		
 		List<Record[]> bestValidation = new ArrayList<Record[]>();
 		Record[] best = new Record[1];
 		for(int i = 0; i < bins.size(); i++) {
@@ -180,17 +176,14 @@ public class Main {
 		}
 		
 		
-		
-		
-		
-		
+
 		System.out.println("Testing...");
 		
 		//KNN on test set
 		callable.clear();
 		
 		for(int i = 0; i < testBins.size(); i++) {
-			CrossValidation fold = new CrossValidation(M, testBins.get(i),14,new int[]{14, 15},bestKNN,bestKNN-1,weighted);
+			CrossValidation fold = new CrossValidation(M, testBins.get(i),14,new int[]{14, 15},bestKNN,bestKNN,weighted);
 			callable.add(fold);
 		}
 		List<Record[]> testRecords = new ArrayList<Record[]>();
@@ -219,9 +212,6 @@ public class Main {
 		System.out.println(testM[0][0] + ", " + testM[0][1] +", " + testM[1][0] + ", " + testM[1][1]);
 		
 		
-		//prints to file
-		DataManager.saveRecord("data/grid.results.txt", bestKNN, weighted,validationM, testM, testRecords.get(0)[0].classType, 5);
-		
 		executor.shutdownNow();
 		
 		
@@ -229,6 +219,11 @@ public class Main {
 		long totalTime = endTime - startTime;
 		System.out.println("Run time(millisecond): " + totalTime );
 		System.out.println("Thread pool: " + threadPool );
+		System.out.println("Cores: " + Runtime.getRuntime().availableProcessors());
+		
+		//prints to file
+		DataManager.saveRecord("data/grid.results.txt", bestKNN, weighted,validationM, testM, testRecords.get(0)[0].classType, 5, totalTime, threadPool);
+		
 		
 //		for(Record a : records.get(0)) {
 //			System.out.println(a.accuracy + " : " + a.KNN);

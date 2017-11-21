@@ -49,7 +49,9 @@ public class CrossValidation implements Callable{
 		for(int i = 0; i < y_pred.length; i++) {
 			int[][] confusionMat = confusionMat(y_pred[i],y_val, classType.size());
 			double accuracy = Accuracy(y_pred[i],y_val);
-			set[i] = new Record(y_pred[i], (i * step) + 1, accuracy, confusionMat,classType);
+			
+			int k = KNN <= step ? KNN -1 : (i * step) + 1;
+			set[i] = new Record(y_pred[i], k, accuracy, confusionMat,classType);
 		}
 		
 		
@@ -91,11 +93,14 @@ public class CrossValidation implements Callable{
 					double classType = y_train.get(ArgSort[neighbors]);
 					
 					counter.put(classType, counter.containsKey(classType) ? counter.get(classType) + 1 : 1);
-					
-					if(neighbors % step == 0) {
+
+					if(neighbors % step == 0 && n_neighbors > step) {
 						outcome.add(getHighest(counter));
 					}
 					
+				}
+				if(n_neighbors <= step) {
+					outcome.add(getHighest(counter));
 				}
 			} else {
 				
@@ -107,13 +112,14 @@ public class CrossValidation implements Callable{
 					
 					weightVote.put(y_class, weightVote.containsKey(y_class) ? weightVote.get(y_class) + 1d/(1d + dist) : 1d/(1d + dist));
 					
-					if(neighbors % step == 0) {
+					if(neighbors % step == 0  && n_neighbors > step) {
 						outcome.add(getHighest(weightVote));
-					}				
-					
+					}
+				}
+				if(n_neighbors <= step) {
+					outcome.add(getHighest(weightVote));
 				}
 			}
-			
 			for(int i = 0; i < y_pred.length; i++) {
 				y_pred[i].put(test, outcome.get(i));
 			}	

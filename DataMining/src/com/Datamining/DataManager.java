@@ -10,13 +10,12 @@ import org.jblas.*;
 public final class DataManager {
 
 	//fail?
-	public static List<HashMap<String,Integer>> count = new ArrayList<HashMap<String,Integer>>();
+	public static List<LinkedHashMap<String,Integer>> count = new ArrayList<LinkedHashMap<String,Integer>>();
 	
 	private static String regex = "";
 	
 	//used for splitfold to get deterministic value 
 	private static long seed = 0l;
-	
 	
 	//encapsulation 
 	public static DoubleMatrix GetFeatures(DoubleMatrix dataSet,int[] col) {
@@ -52,7 +51,9 @@ public final class DataManager {
 	
 	//read csv
 	public static ArrayList<String[]> ReadCSV(String dir,boolean skip) {
-		count.clear();
+		
+		//count.clear();
+		
 		
 		ArrayList<String[]> dataSet = new  ArrayList<String[]>();
 		Path path = Paths.get(dir);
@@ -63,7 +64,7 @@ public final class DataManager {
 			String[] attributes = (reader.readLine()).split(",");
 			
 			for(String a : attributes) {
-				count.add(new HashMap<String,Integer>());
+				count.add(new LinkedHashMap<String,Integer>());
 			}
 			
 			while ((line = reader.readLine()) != null) {
@@ -73,6 +74,9 @@ public final class DataManager {
 					if(!(line.contains(regex) && skip)) {
 						
 						String[] value = line.split(",");
+						for(int i = 0; i < value.length; i++) {
+							value[i] = value[i].trim().toLowerCase();
+						}
 						dataSet.add(value);
 						for(int i = 0; i < value.length; i++) {
 							if(!value[i].equals(regex)) {
@@ -199,7 +203,7 @@ public final class DataManager {
 	//requires to know which line is classtype. Nope.
 	public static DoubleMatrix dataSetToMatrix(ArrayList<String[]> dataSet , int classType) {
 		
-		HashMap<String, Double> StringToNumber = new HashMap<String, Double>();
+		LinkedHashMap<String, Double> StringToNumber = new LinkedHashMap<String, Double>();
 		
 		//for(HashMap<String,Integer> col : count) {
 		for(int col = 0; col < count.size(); col ++) {	
@@ -298,7 +302,6 @@ public final class DataManager {
 		for(int i = 0; i < folds; i++) {
 			retunrBins.add(new DoubleMatrix(0, set.columns));
 		}
-		
 		for(int i = 0; i < set.rows; i++) {
 			int bin = i % folds;
 			retunrBins.set(bin, DoubleMatrix.concatVertically(retunrBins.get(bin), set.getRow(i)));
@@ -346,7 +349,7 @@ public final class DataManager {
 	
 	
 	
-	public static void saveRecord(String dir,int KNN,boolean weighted, int[][] validationM, int[][] testM,List<String> classType, int fold) {
+	public static void saveRecord(String dir,int KNN,boolean weighted, int[][] validationM, int[][] testM,List<String> classType, int fold, double time, int threadPool) {
 		try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(dir, false)))) {
 			
 			writer.println("ValidationSet");
@@ -368,9 +371,12 @@ public final class DataManager {
 				}
 				writer.println(CM);
 			}	
+			writer.println("Best K: " + KNN);
+			writer.println("Weighted: " + weighted);
+			
+			
 			
 			writer.println("");
-			
 			writer.println("TestSet");
 			writer.println("");
 			writer.println("TestSet:");
@@ -390,9 +396,14 @@ public final class DataManager {
 				}
 				writer.println(CM);
 			}
+
 			
-			writer.println("Best K: " + KNN);
-			writer.println("Weighted: " + weighted);
+			writer.println("");
+			writer.println("Multithreading");
+			writer.println("");
+			writer.println("Run time(millisecond): " + time);
+			writer.println("Thread pool: " + threadPool);
+			writer.println("Cores: " + Runtime.getRuntime().availableProcessors());
 			
 			writer.close();
 		} catch (Exception e) {

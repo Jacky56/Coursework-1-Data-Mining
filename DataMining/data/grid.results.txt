@@ -2,19 +2,25 @@ ValidationSet
 
 seed: 0
 folds: 5
-accuracy: 0.8254545454545454
+accuracy: 0.825
 ConfusionMatrix:
-True:   <=50K  >50K
- <=50K:  7720 1255
- >50K:  665 1360
+True:  >50k <=50k
+>50k:  1260 570
+<=50k:  1355 7815
+Best K: 27
+Weighted: true
 
 TestSet
 
 TestSet:
-accuracy: 0.8004422332780542
+accuracy: 0.8277747067133469
 ConfusionMatrix:
-True:   <=50K  >50K
- <=50K:  11253 2067
- >50K:  1182 1779
-Best K: 27
-Weighted: false
+True:  >50k <=50k
+>50k:  1947 905
+<=50k:  1899 11530
+
+Multithreading
+
+Run time(millisecond): 25663.0
+Thread pool: 16
+Cores: 4
