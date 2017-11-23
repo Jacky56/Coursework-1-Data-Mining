@@ -74,44 +74,34 @@ public class CrossValidation implements Callable{
 				magVal[i] = X_test.getRow(test).distance2(X_train.getRow(i));
 			}
 			
-			
 			//sort -> convert into y class via indexing
 			int[] ArgSort = new DoubleMatrix(magVal).sortingPermutation();
 			List<Double> outcome = new ArrayList<Double>();
 			
-			if(!weighted) {
-				//counts up results
-				HashMap<Double, Double> counter = new HashMap<Double, Double>();
-				for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
-					double classType = y_train.get(ArgSort[neighbors]);
-					
-					counter.put(classType, counter.containsKey(classType) ? counter.get(classType) + 1 : 1);
-
-					if(neighbors % step == 0 && n_neighbors > step) {
-						outcome.add(getHighest(counter));
-					}
-					
-				}
-				if(n_neighbors <= step) {
-					outcome.add(getHighest(counter));
-				}
-			} else {
-				//weight: sum(1/ (1 + dist) )
-				HashMap<Double,Double> weightVote = new HashMap<Double,Double>();
-				for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
-					double y_class = y_train.get(ArgSort[neighbors]);
+			
+			HashMap<Double, Double> vote = new HashMap<Double, Double>();
+			for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
+				double classType = y_train.get(ArgSort[neighbors]);
+				
+				//unweighted 
+				double value = 1;
+				//weighted 
+				if(weighted) {
 					double dist  = magVal[ArgSort[neighbors]];
-					
-					weightVote.put(y_class, weightVote.containsKey(y_class) ? weightVote.get(y_class) + 1d/(1d + dist) : 1d/(1d + dist));
-					
-					if(neighbors % step == 0  && n_neighbors > step) {
-						outcome.add(getHighest(weightVote));
-					}
+					value = 1d/(1d + dist);
 				}
-				if(n_neighbors <= step) {
-					outcome.add(getHighest(weightVote));
+				
+				vote.put(classType, vote.containsKey(classType) ? vote.get(classType) + value : value);
+				
+				if(neighbors % step == 0 && n_neighbors > step) {
+					outcome.add(getHighest(vote));
 				}
 			}
+			
+			if(n_neighbors <= step) {
+				outcome.add(getHighest(vote));
+			}
+			
 			for(int i = 0; i < y_pred.length; i++) {
 				y_pred[i].put(test, outcome.get(i));
 			}	
