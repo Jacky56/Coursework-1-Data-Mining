@@ -10,7 +10,7 @@ public class Main {
 	public static void main(String[] args) {
 		
 		DataManager.SetRegex("?");
-		DataManager.SetSeed(0l); //debugging for deterministic random
+		DataManager.SetSeed(10l); //debugging for deterministic random
 		
 		ArrayList<String[]> dataSet = DataManager.ReadCSV("data/adult.train.5fold.csv",false);
 		dataSet = DataManager.ReplaceMissingValues(dataSet);
@@ -114,58 +114,66 @@ public class Main {
 			
 			int currentK = 0;
 			double currentAccuracy = 0;
-			for(int j = 0; j < unweightedRecords.size(); j ++) {
-				currentAccuracy += unweightedRecords.get(j)[i].accuracy;
+			
+			List<Record[]> a = new ArrayList<Record[]>();
+			for(int j = 0; j < unweightedRecords.size(); j ++) { 
+				a.add(new Record[]{ unweightedRecords.get(j)[i]});
 				currentK = unweightedRecords.get(j)[i].KNN;
 			}
+			
+			int[][] m = DataManager.combineMat(a);
+			currentAccuracy = DataManager.getAccuracy(m);
 			
 			if(currentAccuracy > bestAccuracy) {
 				bestKNN = currentK;
 				bestAccuracy = currentAccuracy;
 				weighted = false;
 				validationIndex = i;
-				System.out.println(bestKNN + " : unweighted : " +bestAccuracy/unweightedRecords.size()  + " : Best");
+				System.out.println(bestKNN + " : unweighted : " +bestAccuracy  + " : Best");
 			} else {
-				System.out.println(currentK + " : unweighted : " + currentAccuracy/unweightedRecords.size());
+				System.out.println(currentK + " : unweighted : " + currentAccuracy);
 			}
 		}
+		
 		
 		for(int i = 0; i < weightedRecords.get(0).length; i++) {
 			
 			int currentK = 0;
 			double currentAccuracy = 0;
-			for(int j = 0; j < weightedRecords.size(); j ++) {
-				
-				currentAccuracy += weightedRecords.get(j)[i].accuracy;
+			
+			List<Record[]> a = new ArrayList<Record[]>();
+			for(int j = 0; j < weightedRecords.size(); j ++) { 
+				a.add(new Record[]{ weightedRecords.get(j)[i]});
 				currentK = weightedRecords.get(j)[i].KNN;
 			}
+			
+			int[][] m = DataManager.combineMat(a);
+			currentAccuracy = DataManager.getAccuracy(m);
 			
 			if(currentAccuracy > bestAccuracy) {
 				bestKNN = currentK;
 				bestAccuracy = currentAccuracy;
 				weighted = true;
 				validationIndex = i;
-				System.out.println(bestKNN + " : weighted :" +bestAccuracy/weightedRecords.size()  + " : Best");
+				System.out.println(bestKNN + " : weighted :" +bestAccuracy  + " : Best");
 			} else {
-				System.out.println(currentK + " : weighted :" + currentAccuracy/weightedRecords.size());
+				System.out.println(currentK + " : weighted :" + currentAccuracy);
 			}
 		}		
 		
 		
-		
 		List<Record[]> bestValidation = new ArrayList<Record[]>();
-		Record[] best = new Record[1];
 		for(int i = 0; i < bins.size(); i++) {
 			if(weighted) {
-				best[0] = weightedRecords.get(i)[validationIndex];
+				bestValidation.add(new Record[]{ weightedRecords.get(i)[validationIndex]});
 			} else {
-				best[0] = unweightedRecords.get(i)[validationIndex];
+				bestValidation.add(new Record[]{ unweightedRecords.get(i)[validationIndex]});
 			}
-			bestValidation.add(best);
+
 		}
 		
 		
-
+		
 		
 		System.out.println("Testing...");
 		

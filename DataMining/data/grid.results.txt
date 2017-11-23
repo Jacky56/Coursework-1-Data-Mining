@@ -1,12 +1,12 @@
 ValidationSet
 
-seed: 0
+seed: 10
 folds: 5
-accuracy: 0.825
+accuracy: 0.8290909090909091
 ConfusionMatrix:
 True:  >50k <=50k
->50k:  1260 570
-<=50k:  1355 7815
+>50k:  1344 567
+<=50k:  1313 7776
 Best K: 27
 Weighted: true
 
@@ -21,6 +21,6 @@ True:  >50k <=50k
 
 Multithreading
 
-Run time(millisecond): 22037.0
+Run time(millisecond): 22577.0
 Thread pool: 16
 Cores: 4

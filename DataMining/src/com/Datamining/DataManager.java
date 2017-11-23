@@ -311,9 +311,11 @@ public final class DataManager {
 		int[][] mat = new int[records.get(0)[0].confusionMat.length][records.get(0)[0].confusionMat.length];
 		
 		for(Record[] a : records) {
-			for(int i = 0; i < 2; i++) {
-				for(int j = 0; j < 2; j++) {
-					mat[i][j] += a[a.length-1].confusionMat[i][j];
+			for(Record b : a) {
+				for(int i = 0; i < 2; i++) {
+					for(int j = 0; j < 2; j++) {
+						mat[i][j] += b.confusionMat[i][j];
+					}
 				}
 			}
 		}
