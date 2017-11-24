@@ -10,7 +10,7 @@ public class Main {
 	public static void main(String[] args) {
 		
 		DataManager.SetRegex("?");
-		DataManager.SetSeed(10l); //debugging for deterministic random
+		DataManager.SetSeed(0l); //debugging for deterministic random
 		
 		ArrayList<String[]> dataSet = DataManager.ReadCSV("data/adult.train.5fold.csv",false);
 		dataSet = DataManager.ReplaceMissingValues(dataSet);
@@ -169,7 +169,6 @@ public class Main {
 			} else {
 				bestValidation.add(new Record[]{ unweightedRecords.get(i)[validationIndex]});
 			}
-
 		}
 		
 		
@@ -198,17 +197,12 @@ public class Main {
 			// TODO: handle exception
 		}
 		
-		
-		
-		
-		
-		int[][] validationM =  DataManager.combineMat(bestValidation);
 		int[][] testM = DataManager.combineMat(testRecords);
 		double testAccuracy = DataManager.getAccuracy(testM);
-		
+		double teststd = DataManager.GetStd(testRecords);
 		
 		//print stuff
-		System.out.println(bestKNN + " : "+ weighted + " : " + testAccuracy);
+		System.out.println(bestKNN + " : "+ weighted + " : " + testAccuracy + " : " + teststd);
 		System.out.println(testM[0][0] + ", " + testM[0][1] +", " + testM[1][0] + ", " + testM[1][1]);
 		
 		//delete all worker threads
@@ -222,12 +216,8 @@ public class Main {
 		System.out.println("Cores: " + Runtime.getRuntime().availableProcessors());
 		
 		//prints to file
-		DataManager.saveRecord("data/grid.results.txt", bestKNN, weighted,validationM, testM, testRecords.get(0)[0].classType, 5, totalTime, threadPool);
+		DataManager.saveRecord("data/grid.results.txt","<=50k", bestKNN, weighted, bestValidation, testRecords, testRecords.get(0)[0].classType, 5, totalTime, threadPool);
 	}
-	
-	
-	
-	
 }
 
 

@@ -339,17 +339,53 @@ public final class DataManager {
 	}
 	
 	
+	public static double GetStd(List<Record[]> records) {
+		double sum = 0;
+		int item = 0;
+		
+		for(Record[] a : records) {
+			for(Record b : a) {
+				sum += b.accuracy;
+				item ++;
+			}
+		}
+		
+		double u = sum / item;
+		double v = 0;
+		for(Record[] a : records) {
+			for(Record b : a) {
+				v += Math.pow(b.accuracy - u, 2);
+			}
+		}
+		return Math.sqrt(v/(item - 1));
+	}
 	
 	
-	
-	public static void saveRecord(String dir,int KNN,boolean weighted, int[][] validationM, int[][] testM,List<String> classType, int fold, double time, int threadPool) {
+	public static void saveRecord(String dir,String positiveClass, int KNN,boolean weighted, List<Record[]> validation, List<Record[]> test,List<String> classType, int fold, double time, int threadPool) {
 		try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(dir, false)))) {
+			
+			String cleanString = positiveClass.trim().toLowerCase();
+			int nC = -1;
+			int pC = -1;
+			for(int i = 0; i < classType.size(); i++) {
+				if(classType.get(i).equals(cleanString)) {
+					pC = i;
+				} else {
+					nC = i;
+				}
+			}
+			
+			int[][] validationM = combineMat(validation);
+			int[][] testM = combineMat(test);
+			double validationstd = GetStd(validation);	
+			
+			
 			
 			writer.println("ValidationSet");
 			writer.println("");
 			writer.println("seed: " + seed);
 			writer.println("folds: " + fold);
-			writer.println("accuracy: " + getAccuracy(validationM));
+			writer.println("accuracy: " + getAccuracy(validationM) + " +/- " + validationstd);
 			writer.println("ConfusionMatrix:");
 			String CM = "True: ";
 			for(String clstyp : classType) {
@@ -389,7 +425,31 @@ public final class DataManager {
 				}
 				writer.println(CM);
 			}
-
+			
+			
+			double total = 0;
+			for(int i = 0; i < testM.length; i++) {
+				total += testM[i][pC];
+			}
+			double precision = testM[pC][pC] / total;
+			
+			total = 0;
+			for(int i = 0; i < testM.length; i++) {
+				total += testM[nC][i];
+			}
+			double specificity = testM[nC][nC] / total;	
+			
+			total = 0;
+			for(int i = 0; i < testM.length; i++) {
+				total += testM[pC][i];
+			}
+			double sensitivity = testM[pC][pC] / total;				
+			
+			writer.println("<=50k performance measures");
+			writer.println("precision:" + precision);
+			writer.println("sensitivity:" + sensitivity);
+			writer.println("specificity:" + specificity);
+			
 			
 			writer.println("");
 			writer.println("Multithreading");
