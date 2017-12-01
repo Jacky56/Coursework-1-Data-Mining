@@ -78,7 +78,6 @@ public class CrossValidation implements Callable{
 			int[] ArgSort = new DoubleMatrix(magVal).sortingPermutation();
 			List<Double> outcome = new ArrayList<Double>();
 			
-			
 			HashMap<Double, Double> vote = new HashMap<Double, Double>();
 			for(int neighbors = 0; neighbors < n_neighbors; neighbors++) {
 				double classType = y_train.get(ArgSort[neighbors]);
@@ -90,9 +89,7 @@ public class CrossValidation implements Callable{
 					double dist  = magVal[ArgSort[neighbors]];
 					value = 1d/(1d + dist);
 				}
-				
 				vote.put(classType, vote.containsKey(classType) ? vote.get(classType) + value : value);
-				
 				if(neighbors % step == 0 && n_neighbors > step) {
 					outcome.add(getHighest(vote));
 				}
@@ -101,7 +98,6 @@ public class CrossValidation implements Callable{
 			if(n_neighbors <= step) {
 				outcome.add(getHighest(vote));
 			}
-			
 			for(int i = 0; i < y_pred.length; i++) {
 				y_pred[i].put(test, outcome.get(i));
 			}	
@@ -115,7 +111,7 @@ public class CrossValidation implements Callable{
 	private Double getHighest(HashMap<Double, Double> countSet) {
 		Map.Entry<Double, Double> maxCount = null;
 		for(Map.Entry<Double, Double> role : countSet.entrySet()) {
-			if(maxCount == null || maxCount.getValue() < role.getValue() ) {
+			if(maxCount == null || maxCount.getValue() <= role.getValue() ) {
 				maxCount = role;
 			}
 		}

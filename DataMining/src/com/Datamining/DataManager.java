@@ -155,19 +155,13 @@ public final class DataManager {
 	
 	//no cell can be Null for this function
 	//Z-normalization Z = (X-u) /s
+	//has 'Feature scaling'
 	public static DoubleMatrix Normalize(DoubleMatrix dataSet) {
 		
 		DoubleMatrix returnSet = new DoubleMatrix(dataSet.rows,dataSet.columns);
 		DoubleMatrix rawSet = dataSet;
 		
-//		for(int row = 0; row < dataSet.rows; row++) {
-//			DoubleMatrix X = rawSet.getRow(row);
-//			double u = rawSet.getRow(row).mean();
-//			double s = GetStd(rawSet.getRow(row));
-//			DoubleMatrix Z = (X.sub(u)).div(s);
-//			returnSet.putRow(row, Z);
-//		}
-		
+		//Z-normalization
 		for(int col = 0; col < dataSet.columns; col ++) {
 			
 			DoubleMatrix X = rawSet.getColumn(col);
@@ -176,9 +170,23 @@ public final class DataManager {
 			DoubleMatrix Z = (X.sub(u)).div(s);
 			returnSet.putColumn(col, Z);
 		}
+//		//Feature scaling
+//		for(int col = 0; col < dataSet.columns; col ++) {
+//			DoubleMatrix X = rawSet.getColumn(col);
+//			double min = X.min();
+//			double max = X.max();
+//			double lower = 0;
+//			double higher = 10;
+//			DoubleMatrix Z = X.sub(min).mul(higher-lower).div(max-min).add(lower);
+//			returnSet.putColumn(col, Z);
+//		}
+		
+		
 		
 		return returnSet;
 	}
+	
+	
 	
 	
 	public static double GetStd(DoubleMatrix s) {
@@ -221,6 +229,10 @@ public final class DataManager {
 				}
 			}
 		}
+		
+//		for(Map.Entry<String, Integer> entry : count.get(3).entrySet()) {
+//			System.out.println(entry.getKey() +": " + StringToNumber.get(entry.getKey()));
+//		}
 		
 		DoubleMatrix returnSet = new DoubleMatrix(dataSet.size(),dataSet.get(0).length);
 		
@@ -361,7 +373,7 @@ public final class DataManager {
 	}
 	
 	
-	public static void saveRecord(String dir,String positiveClass, int KNN,boolean weighted, List<Record[]> validation, List<Record[]> test,List<String> classType, int fold, double time, int threadPool) {
+	public static void saveRecord(String dir,int classColumn,int[] removedFeatures,String positiveClass, int KNN,boolean weighted, List<Record[]> validation, List<Record[]> test,List<String> classType, int fold, double time, int threadPool) {
 		try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(dir, false)))) {
 			
 			String cleanString = positiveClass.trim().toLowerCase();
@@ -380,11 +392,17 @@ public final class DataManager {
 			double validationstd = GetStd(validation);	
 			
 			
-			
-			writer.println("ValidationSet");
-			writer.println("");
+			writer.println("Settings");
+			writer.println("Checking against column: " + classColumn);
+			writer.println("Attributes/Features/Columns removed: " + Arrays.toString(removedFeatures));
+			writer.println("Normalisation type: Standard Score");
+			writer.println("Weight Type: sum(1/1+dist)");
 			writer.println("seed: " + seed);
 			writer.println("folds: " + fold);
+			
+			writer.println("");
+			writer.println("ValidationSet");
+			writer.println("");
 			writer.println("accuracy: " + getAccuracy(validationM) + " +/- " + validationstd);
 			writer.println("ConfusionMatrix:");
 			String CM = "True: ";

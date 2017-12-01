@@ -9,6 +9,9 @@ import javax.xml.crypto.Data;
 public class Main {
 	public static void main(String[] args) {
 		
+		//default: column 14, 15 [earns, fold]
+		int[] featuresRemoved = new int[]{14,15,0,3,7,8,9,13}; //removed age,education,relationship,race,sex,country
+		
 		DataManager.SetRegex("?");
 		DataManager.SetSeed(0l); //debugging for deterministic random
 		
@@ -47,7 +50,7 @@ public class Main {
 			}
 			
 			//build worker thread
-			CrossValidation fold = new CrossValidation(Train, Validation,14,new int[]{14,15},40,2,false);
+			CrossValidation fold = new CrossValidation(Train, Validation,14,featuresRemoved,40,2,false);
 			callable.add(fold);
 		}
 		
@@ -84,7 +87,7 @@ public class Main {
 				}
 			}
 			//build worker thread
-			CrossValidation fold = new CrossValidation(Train, Validation,14,new int[]{14,15},40,2,true);
+			CrossValidation fold = new CrossValidation(Train, Validation,14,featuresRemoved,40,2,true);
 			callable.add(fold);
 		}
 		
@@ -150,7 +153,7 @@ public class Main {
 			int[][] m = DataManager.combineMat(a);
 			currentAccuracy = DataManager.getAccuracy(m);
 			
-			if(currentAccuracy > bestAccuracy) {
+			if(currentAccuracy >= bestAccuracy) {
 				bestKNN = currentK;
 				bestAccuracy = currentAccuracy;
 				weighted = true;
@@ -181,7 +184,7 @@ public class Main {
 		
 		//build worker threads
 		for(int i = 0; i < testBins.size(); i++) {
-			CrossValidation fold = new CrossValidation(M, testBins.get(i),14,new int[]{14, 15},bestKNN,bestKNN,weighted);
+			CrossValidation fold = new CrossValidation(M, testBins.get(i),14,featuresRemoved,bestKNN,bestKNN,weighted);
 			callable.add(fold);
 		}
 		
@@ -199,10 +202,10 @@ public class Main {
 		
 		int[][] testM = DataManager.combineMat(testRecords);
 		double testAccuracy = DataManager.getAccuracy(testM);
-		double teststd = DataManager.GetStd(testRecords);
+		//double teststd = DataManager.GetStd(testRecords);
 		
 		//print stuff
-		System.out.println(bestKNN + " : "+ weighted + " : " + testAccuracy + " : " + teststd);
+		System.out.println(bestKNN + " : "+ weighted + " : " + testAccuracy);
 		System.out.println(testM[0][0] + ", " + testM[0][1] +", " + testM[1][0] + ", " + testM[1][1]);
 		
 		//delete all worker threads
@@ -216,7 +219,7 @@ public class Main {
 		System.out.println("Cores: " + Runtime.getRuntime().availableProcessors());
 		
 		//prints to file
-		DataManager.saveRecord("data/grid.results.txt","<=50k", bestKNN, weighted, bestValidation, testRecords, testRecords.get(0)[0].classType, 5, totalTime, threadPool);
+		DataManager.saveRecord("data/grid.results.txt", 14, featuresRemoved,"<=50k", bestKNN, weighted, bestValidation, testRecords, testRecords.get(0)[0].classType, 5, totalTime, threadPool);
 	}
 }
 

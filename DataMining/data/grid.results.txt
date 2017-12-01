@@ -1,30 +1,36 @@
-ValidationSet
-
+Settings
+Checking against column: 14
+Attributes/Features/Columns removed: [14, 15, 0, 3, 7, 8, 9, 13]
+Normalisation type: Standard Score
+Weight Type: sum(1/1+dist)
 seed: 0
 folds: 5
-accuracy: 0.8290909090909091 +/- 0.00494807751297209
+
+ValidationSet
+
+accuracy: 0.8355454545454546 +/- 0.00559847972280081
 ConfusionMatrix:
 True:  >50k <=50k
->50k:  1344 567
-<=50k:  1313 7776
-Best K: 27
+>50k:  1401 553
+<=50k:  1256 7790
+Best K: 19
 Weighted: true
 
 TestSet
 
 TestSet:
-accuracy: 0.8277747067133469
+accuracy: 0.8408574411891161
 ConfusionMatrix:
 True:  >50k <=50k
->50k:  1947 905
-<=50k:  1899 11530
+>50k:  2060 805
+<=50k:  1786 11630
 <=50k performance measures
-precision:0.927221552070768
-sensitivity:0.8585896194802294
-specificity:0.6826788218793829
+precision:0.9352633695215119
+sensitivity:0.8668753726893261
+specificity:0.7190226876090751
 
 Multithreading
 
-Run time(millisecond): 29322.0
+Run time(millisecond): 19478.0
 Thread pool: 16
 Cores: 4
