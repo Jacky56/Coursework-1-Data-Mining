@@ -399,6 +399,7 @@ public final class DataManager {
 			writer.println("Weight Type: sum(1/1+dist)");
 			writer.println("seed: " + seed);
 			writer.println("folds: " + fold);
+			writer.println("Allow TestSet to be appended to Training Set: " + CrossValidation.Allow_testSet_to_be_Appended);
 			
 			writer.println("");
 			writer.println("ValidationSet");

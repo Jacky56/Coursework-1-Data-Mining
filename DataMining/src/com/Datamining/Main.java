@@ -12,6 +12,7 @@ public class Main {
 		//default: column 14, 15 [earns, fold]
 		int[] featuresRemoved = new int[]{14,15,0,3,7,8,9,13}; //removed age,education,relationship,race,sex,country
 		
+		CrossValidation.Allow_testSet_to_be_Appended = true;
 		DataManager.SetRegex("?");
 		DataManager.SetSeed(0l); //debugging for deterministic random
 		
