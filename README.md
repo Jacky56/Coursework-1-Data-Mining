@@ -11,6 +11,3 @@ change thread pool https://gyazo.com/67c4971c7f8c794e3fc5a8d7dd638cda , 1 thread
 
 
 16 threads: https://gyazo.com/f906b1e41c5009ab50a91d58aaf44ff7
-
-
-DO NOT USE MORE THAN 1 THREAD ON YOUR LAPTOP UNLESS YOU WANT TO COOK YOUR CPU
